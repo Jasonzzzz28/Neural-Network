@@ -1,0 +1,230 @@
+import math
+import random
+
+import numpy as np
+
+alpha = 0.853
+gamma = 0.2
+epoch = 0
+mse = math.inf
+
+def relu(x):
+    return np.maximum(x, 0)
+
+def reluDer(x):
+    return max(x, 0.0)
+
+
+def activation(z):
+    '''
+    Sigmoid function on a vector this is included for use as your activation function
+    
+    Input: a vector of elements to preform sigmoid on
+    
+    Output: a vector of elements with sigmoid preformed on them
+    '''
+    return 1 / (1 + np.exp(-z))
+
+
+def sigderiv(z):
+    '''
+    The derivative of Sigmoid, you will need this to preform back prop
+    '''
+    return activation(z) * (1 - activation(z))
+
+
+class NeuralNetwork(object):
+    '''
+    This Object outlines a basic neuralnetwork and the methods that it will need to function
+    
+    We have included an init method with a size parameter:
+        Size: A 1D array indicating the node size of each layer
+            E.G. Size = [2, 4, 1] Will instantiate weights and biases for a network
+            with 2 input nodes, 1 hidden layer with 4 nodes, and an output layer with 1 node
+        
+        test_train defines the sizes of the input and output layers, but the rest is up to your implementation
+    
+    In this network for simplicity all nodes in a layer are connected to all nodes in the next layer, and the weights and
+    biases and intialized as such. E.G. In a [2, 4, 1] network each of the 4 nodes in the inner layer will have 2 weight values
+    and one biases value.
+    
+    '''
+
+    def __init__(self, size, seed=42):
+        '''
+        Here the weights and biases specified above will be instantiated to random values
+        Your network will change these values to fit a certain dataset by training
+        '''
+        self.seed = seed
+        np.random.seed(self.seed)
+        self.size = size
+        self.weights = [np.random.randn(self.size[i], self.size[i - 1]) * np.sqrt(1 / self.size[i - 1]) for i in
+                        range(1, len(self.size))]
+        self.biases = [np.random.rand(n, 1) for n in self.size[1:]]
+
+    def forward(self, input):
+        '''
+        Perform a feed forward computation 
+        Parameters:
+
+        input: data to be fed to the network with (shape described in spec)
+
+        returns:
+
+        the output value(s) of each example as ‘a’
+
+        The values before activation was applied after the input was weighted as ‘pre_activations’
+
+        The values after activation for all layers as ‘activations’
+
+        You will need ‘pre_activaitons’ and ‘activations’ for updating the network
+        '''
+        a = input
+        pre_activations = []
+        activations = [a]
+        for w, b in zip(self.weights, self.biases):
+            z = np.dot(w, a) + b
+            if len(activations) == len(self.weights):
+                a = activation(z)
+            else:
+                a = relu(z)
+            pre_activations.append(z)
+            activations.append(a)
+        global epoch
+        epoch += 1
+        return a, pre_activations, activations
+
+    def backpropagate(self, X, y):
+        for e, res in zip(range(0, len(X[0])), y[0]):
+            deltas = [[0 for i in range(0, len(self.weights[l]))] for l in range(0, len(self.weights))]
+            a, pre, post = self.forward([[X[i][e]] for i in range(0, len(X))])
+            deltas[len(self.weights) - 1][0] = (res - a[0][0]) * sigderiv(pre[len(pre) - 1][0][0])
+            l = len(self.weights) - 2
+            while l >= 0:
+                for i in range(0, len(self.weights[l+1])):
+                    sum = 0
+                    for j in range(0, len(self.weights[l+1][i])):
+                        # print(deltas[l + 1][j])
+                        sum += self.weights[l+1][i][j] * deltas[l + 1][i]
+                        deltas[l][j] = sum * reluDer(pre[l][i][0])
+                l -= 1
+            # print (deltas) #debug
+            # print(self.biases[1][0])
+            # print(self.weights[23])
+            for l in range(0, len(self.weights)):
+                for i in range(0, len(self.weights[l])):
+                    self.biases[l][i][0] = self.biases[l][i][0] - gamma * deltas[l][i]
+                    for j in range(0, len(self.weights[l][i])):
+                        self.weights[l][i][j] = self.weights[l][i][j] + alpha*(post[l][j][0] * deltas[l][i])  # problem!!
+            pp = np.sum((self.predict(X) - y[0]) ** 2) / np.size(X, 0)
+            global mse
+            if pp < mse:
+
+                mse = pp
+            #print(pp)
+            if pp < 100:
+                return False
+        return True
+
+
+    def train(self, X, y):
+        # size = np.size(X, 0)
+        # ysize = len(y[0])
+        # e = 0
+        # res = 0
+        # pre = math.inf
+        # mse = math.inf
+        # while e < 1000:
+        #     for i in range(0, 100):
+        #         self.backpropagate(X, e, y[0][res])
+        #         e = (e + 1)%size
+        #         res = (res + 1) % ysize
+        #     mse = np.sum((self.predict(X) - y[0]) ** 2) / size
+        #     print(mse)
+
+        ra = random.sample(range(0, len(X[0])- 10), len(X[0]) -10)
+
+        go = True
+        count = 0
+        mse = math.inf
+        while count<1:
+            count += 1
+            go = self.backpropagate(X, y)
+            # print(np.sum((self.predict(X) - y[0]) ** 2) / np.size(X, 0))
+            # # print(mse)
+            # temp = np.sum((self.predict(X) - y[0]) ** 2) / np.size(X, 0)
+            # if temp < mse:
+            #     mse = temp
+            #     count = go
+
+        # print(count)
+
+
+        # mse = math.inf
+        # a = 0
+        # global gamma
+        # while  gamma < 0.2:
+        #     gamma += 0.001
+        #     self.backpropagate(X, y)
+        #
+        #     # print(alpha)
+        #     # print(mse)
+        #     temp = np.sum((self.predict(X) - y[0]) ** 2) / np.size(X, 0)
+        #     if temp < mse:
+        #         a = gamma
+        #         mse = temp
+        #
+        #     self.__init__([np.size(X, 0), 4, 1])
+        # print("gamma: ")
+        # print(a)
+
+
+    def predict(self, a):
+        '''
+       Input: a: list of list of input vectors to be tested
+       
+       This method will test a vector of input parameter vectors of the same form as X in test_train
+       and return the results (Zero or One) that your trained network came up with for every element.
+       
+       This method does this the same way the included forward method moves an input through the network
+       but without storying the previous values (which forward stores for use with the delta function you must write)
+        '''
+        for w, b in zip(self.weights, self.biases):
+            z = np.dot(w, a) + b
+            a = activation(z)
+        predictions = (a > 0.5).astype(int)
+        return predictions
+
+
+'''
+This is the function that we will call to test your network.
+
+It must instantiate a network, which we include.
+
+It must then train the network given the passed data, where x is the parameters in form:
+        [[1rst parameter], [2nd parameter], [nth parameter]]
+    
+        Where if there are 100 training examples each of the n lists inside the list above will have 100 elements
+        
+    Y is the target which is guarenteed to be binary, or in other words true or false:
+    Y will be of the form: 
+        [[1, 0, 0, ...., 1, 0, 1]]
+        
+        (where 1 indicates true and zero indicates false)
+
+'''
+
+
+def test_train(X, y, alp):
+    inputSize = np.size(X, 0)
+
+    # feel free to change the inside (hidden) layers to best suite your implementation
+    # but the sizes of the input layer and output layer (inputSize and 1) must NOT CHANGE
+    retNN = NeuralNetwork([inputSize, 9, 1])
+    global alpha
+    alpha = alp
+    # train your network here
+    retNN.train(X, y)
+
+    # then the function MUST return your TRAINED nueral network
+    return retNN
