@@ -1,0 +1,85 @@
+from matplotlib import pyplot as plt
+import numpy as np
+import pandas as pd
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
+from sklearn import datasets
+# import instrNet
+# import studentNN
+import studNet
+
+
+# data = datasets.make_moons(n_samples=2500, noise=0.1)
+#
+#
+#
+# X = data[0]
+# y = np.expand_dims(data[1], 1)
+#
+#
+#
+# x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.3, )
+#
+# xPass = x_train.T
+# yPass = y_train.T
+#
+# accu = 0
+# res = 0
+# node = 0
+# alp = 1
+# while alp < 1000:
+#     for x in range(1, 2):
+#     # studentNet = instrNet.test_train(xPass, yPass)
+#         studentNet = studNet.test_train(xPass, yPass, 0.0001*alp, x)
+#
+#         results = studentNet.predict(x_test.T)
+#         # print(alp)
+#         # print(x)
+#         # print(accuracy_score(y_test.T[0], results[0]))
+#         au = accuracy_score(y_test.T[0], results[0])
+#         # print(au)
+#         if au > accu:
+#             print(alp)
+#             print(x)
+#             print(au)
+#             accu = au
+#             res = alp
+#             node = x
+#     alp += 2
+# print("Best ")
+# print (res)
+# print (accu)
+# print(node)
+
+
+
+
+
+data = datasets.make_moons(n_samples=2500, noise=0.1)
+
+X = data[0]
+y = np.expand_dims(data[1], 1)
+
+x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.3, )
+
+xPass = x_train.T
+yPass = y_train.T
+
+# studentNet = instrNet.test_train(xPass, yPass)
+studentNet = studNet.test_train(xPass, yPass)
+results = studentNet.predict(x_test.T)
+print(accuracy_score(y_test.T[0], results[0]))
+
+#non linear
+# data = datasets.make_circles(n_samples=500, noise=0.025)
+# X = data[0]
+# y = np.expand_dims(data[1], 1)
+#
+# x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.2, )
+#
+# xPass = x_train.T
+# yPass = y_train.T
+#
+# studentNet = studNet.test_train(xPass, yPass)
+# results = studentNet.predict(x_test.T)
+# print(accuracy_score(y_test.T[0], results[0]))
