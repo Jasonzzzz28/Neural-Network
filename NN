@@ -3,16 +3,27 @@ import random
 
 import numpy as np
 
-alpha = 0.853
+alpha = 0.767
 gamma = 0.2
 epoch = 0
 mse = math.inf
+count = 0
 
 def relu(x):
+    '''
+    ReLu function
+    '''
+
     return np.maximum(x, 0)
 
 def reluDer(x):
-    return max(x, 0.0)
+    '''
+    derivative of ReLu function
+     '''
+    if x >= 0:
+        return 1
+    else:
+        return 0
 
 
 def activation(z):
@@ -83,7 +94,7 @@ class NeuralNetwork(object):
         pre_activations = []
         activations = [a]
         for w, b in zip(self.weights, self.biases):
-            z = np.dot(w, a) + b
+            z = np.dot(w, a)
             if len(activations) == len(self.weights):
                 a = activation(z)
             else:
@@ -95,34 +106,37 @@ class NeuralNetwork(object):
         return a, pre_activations, activations
 
     def backpropagate(self, X, y):
-        for e, res in zip(range(0, len(X[0])), y[0]):
+        for e in random.sample(range(0, int(len(X[0])*0.9)), int(len(X[0])*0.9)):
             deltas = [[0 for i in range(0, len(self.weights[l]))] for l in range(0, len(self.weights))]
             a, pre, post = self.forward([[X[i][e]] for i in range(0, len(X))])
-            deltas[len(self.weights) - 1][0] = (res - a[0][0]) * sigderiv(pre[len(pre) - 1][0][0])
+            deltas[len(self.weights) - 1][0] = (y[0][e] - a[0][0]) * sigderiv(pre[len(pre) - 1][0][0])
             l = len(self.weights) - 2
             while l >= 0:
                 for i in range(0, len(self.weights[l+1])):
                     sum = 0
                     for j in range(0, len(self.weights[l+1][i])):
-                        # print(deltas[l + 1][j])
                         sum += self.weights[l+1][i][j] * deltas[l + 1][i]
                         deltas[l][j] = sum * reluDer(pre[l][i][0])
                 l -= 1
-            # print (deltas) #debug
-            # print(self.biases[1][0])
-            # print(self.weights[23])
+
             for l in range(0, len(self.weights)):
                 for i in range(0, len(self.weights[l])):
-                    self.biases[l][i][0] = self.biases[l][i][0] - gamma * deltas[l][i]
+                    # self.biases[l][i][0] = self.biases[l][i][0] - alpha * deltas[l][i]
                     for j in range(0, len(self.weights[l][i])):
                         self.weights[l][i][j] = self.weights[l][i][j] + alpha*(post[l][j][0] * deltas[l][i])  # problem!!
-            pp = np.sum((self.predict(X) - y[0]) ** 2) / np.size(X, 0)
+            vtest = X[:, int(len(X[0])*0.9): len(X[0])]
+
+            pp = np.sum((self.predict(vtest) - y[0][int(len(X[0])*0.9): len(y[0])]) ** 2) / len(vtest)
             global mse
             if pp < mse:
 
                 mse = pp
-            #print(pp)
-            if pp < 100:
+
+            if epoch > 15500: return False
+            print(pp)
+            if pp < 8:
+                print("epoch: ")
+                print(epoch)
                 return False
         return True
 
@@ -142,12 +156,10 @@ class NeuralNetwork(object):
         #     mse = np.sum((self.predict(X) - y[0]) ** 2) / size
         #     print(mse)
 
-        ra = random.sample(range(0, len(X[0])- 10), len(X[0]) -10)
-
         go = True
         count = 0
         mse = math.inf
-        while count<1:
+        while go:
             count += 1
             go = self.backpropagate(X, y)
             # print(np.sum((self.predict(X) - y[0]) ** 2) / np.size(X, 0))
@@ -215,14 +227,15 @@ It must then train the network given the passed data, where x is the parameters 
 '''
 
 
-def test_train(X, y, alp):
+def test_train(X, y):
     inputSize = np.size(X, 0)
 
     # feel free to change the inside (hidden) layers to best suite your implementation
     # but the sizes of the input layer and output layer (inputSize and 1) must NOT CHANGE
-    retNN = NeuralNetwork([inputSize, 9, 1])
-    global alpha
-    alpha = alp
+    retNN = NeuralNetwork([inputSize, 12, 1])
+
+    # global alpha
+    # alpha = alp
     # train your network here
     retNN.train(X, y)
 
