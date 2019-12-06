@@ -119,7 +119,7 @@ class NeuralNetwork(object):
         Perform a backpropagation, calculate deltas and update weights using reLu and sigmoid
         '''
         global alpha, resW
-        for e in random.sample(range(0, int(len(X[0]) * 0.9)), int(len(X[0]) * 0.9)):
+        for e in random.sample(range(0, int(len(X[0]) * 1)), int(len(X[0]) * 1)):
             deltas = [[0 for i in range(0, len(self.weights[l]))] for l in range(0, len(self.weights))]
             a, pre, post = self.forward([[X[i][e]] for i in range(0, len(X))])
             deltas[len(self.weights) - 1][0] = (y[0][e] - a[0][0]) * sigderiv(pre[len(pre) - 1][0][0])
@@ -147,7 +147,7 @@ class NeuralNetwork(object):
             # print(pp)
             if pp < mse:
                 resW = deepcopy(self.weights)  # trying
-                print(pp)
+                #print(pp)
                 mse = pp
 
 
@@ -163,13 +163,13 @@ class NeuralNetwork(object):
             # validation
 
             if epoch > 20000:
-                print(pp)
-                print(mse)
+                #print(pp)
+                #print(mse)
                 self.weights = resW
                 # print(self.weights)
                 return False
             if pp < 0.03:
-                print("yes")
+                # print("yes")
                 return False
         return True
 
@@ -217,7 +217,7 @@ It must then train the network given the passed data, where x is the parameters 
 '''
 
 
-def test_train(X, y):
+def test_train(X, y, alp):
     inputSize = np.size(X, 0)
 
     # feel free to change the inside (hidden) layers to best suite your implementation
@@ -225,7 +225,8 @@ def test_train(X, y):
     retNN = NeuralNetwork([inputSize, 12, 1])
 
     global alpha, epoch, mse, resW
-    alpha = 0.5999999
+    alpha = alp
+    # alpha = 0.9
     epoch = 0
     mse = math.inf
     resW = 0
