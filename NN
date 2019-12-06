@@ -1,13 +1,21 @@
+"""
+I pledge on my honor that I have not given or received
+any unauthorized assistance on this project.
+Siyuan Zhang UID 115299634
+Project 3 CMSC421
+This file contains a simple Neural Network
+"""
 import math
 import random
+from copy import deepcopy
 
 import numpy as np
 
-alpha = 0.767
-gamma = 0.2
-epoch = 0
-mse = math.inf
-count = 0
+# alpha = 0.5
+# epoch = 0
+# mse = math.inf  # mean squared error
+global alpha, epoch, mse, resW
+
 
 def relu(x):
     '''
@@ -15,6 +23,7 @@ def relu(x):
     '''
 
     return np.maximum(x, 0)
+
 
 def reluDer(x):
     '''
@@ -106,90 +115,71 @@ class NeuralNetwork(object):
         return a, pre_activations, activations
 
     def backpropagate(self, X, y):
-        for e in random.sample(range(0, int(len(X[0])*0.9)), int(len(X[0])*0.9)):
+        '''
+        Perform a backpropagation, calculate deltas and update weights using reLu and sigmoid
+        '''
+        global alpha, resW
+        for e in random.sample(range(0, int(len(X[0]) * 0.9)), int(len(X[0]) * 0.9)):
             deltas = [[0 for i in range(0, len(self.weights[l]))] for l in range(0, len(self.weights))]
             a, pre, post = self.forward([[X[i][e]] for i in range(0, len(X))])
             deltas[len(self.weights) - 1][0] = (y[0][e] - a[0][0]) * sigderiv(pre[len(pre) - 1][0][0])
             l = len(self.weights) - 2
             while l >= 0:
-                for i in range(0, len(self.weights[l+1])):
+                for i in range(0, len(self.weights[l + 1])):
                     sum = 0
-                    for j in range(0, len(self.weights[l+1][i])):
-                        sum += self.weights[l+1][i][j] * deltas[l + 1][i]
+                    for j in range(0, len(self.weights[l + 1][i])):
+                        sum += self.weights[l + 1][i][j] * deltas[l + 1][i]
                         deltas[l][j] = sum * reluDer(pre[l][i][0])
                 l -= 1
 
             for l in range(0, len(self.weights)):
                 for i in range(0, len(self.weights[l])):
-                    # self.biases[l][i][0] = self.biases[l][i][0] - alpha * deltas[l][i]
                     for j in range(0, len(self.weights[l][i])):
-                        self.weights[l][i][j] = self.weights[l][i][j] + alpha*(post[l][j][0] * deltas[l][i])  # problem!!
-            vtest = X[:, int(len(X[0])*0.9): len(X[0])]
+                        self.weights[l][i][j] = self.weights[l][i][j] + alpha * (
+                                post[l][j][0] * deltas[l][i])
 
-            pp = np.sum((self.predict(vtest) - y[0][int(len(X[0])*0.9): len(y[0])]) ** 2) / len(vtest)
+            # vtest = X[:, int(len(X[0]) * 0.9): len(X[0])]  # testing set
+            # pp = np.sum((self.predict(vtest) - y[0][int(len(X[0]) * 0.9): len(y[0])]) ** 2) / len(vtest[0])
+
+            pp = np.sum((self.predict(X)- y[0])**2)/len(X[0])
+            # calculate mean square error
             global mse
+            # print(pp)
             if pp < mse:
-
+                resW = deepcopy(self.weights)  # trying
+                print(pp)
                 mse = pp
 
-            if epoch > 15500: return False
-            print(pp)
-            if pp < 8:
-                print("epoch: ")
-                print(epoch)
+
+            # if pp < 0.1:
+            #     print(mse)
+            #     alpha = 0.6
+            #     print("is")
+            #     print(pp)
+
+            # if pp < 0.11:
+            #
+            #     alpha = 0.001
+            # validation
+
+            if epoch > 20000:
+                print(pp)
+                print(mse)
+                self.weights = resW
+                # print(self.weights)
+                return False
+            if pp < 0.03:
+                print("yes")
                 return False
         return True
 
-
     def train(self, X, y):
-        # size = np.size(X, 0)
-        # ysize = len(y[0])
-        # e = 0
-        # res = 0
-        # pre = math.inf
-        # mse = math.inf
-        # while e < 1000:
-        #     for i in range(0, 100):
-        #         self.backpropagate(X, e, y[0][res])
-        #         e = (e + 1)%size
-        #         res = (res + 1) % ysize
-        #     mse = np.sum((self.predict(X) - y[0]) ** 2) / size
-        #     print(mse)
-
+        '''
+        Train the NN, stop when the cost is minimized
+        '''
         go = True
-        count = 0
-        mse = math.inf
         while go:
-            count += 1
             go = self.backpropagate(X, y)
-            # print(np.sum((self.predict(X) - y[0]) ** 2) / np.size(X, 0))
-            # # print(mse)
-            # temp = np.sum((self.predict(X) - y[0]) ** 2) / np.size(X, 0)
-            # if temp < mse:
-            #     mse = temp
-            #     count = go
-
-        # print(count)
-
-
-        # mse = math.inf
-        # a = 0
-        # global gamma
-        # while  gamma < 0.2:
-        #     gamma += 0.001
-        #     self.backpropagate(X, y)
-        #
-        #     # print(alpha)
-        #     # print(mse)
-        #     temp = np.sum((self.predict(X) - y[0]) ** 2) / np.size(X, 0)
-        #     if temp < mse:
-        #         a = gamma
-        #         mse = temp
-        #
-        #     self.__init__([np.size(X, 0), 4, 1])
-        # print("gamma: ")
-        # print(a)
-
 
     def predict(self, a):
         '''
@@ -234,8 +224,11 @@ def test_train(X, y):
     # but the sizes of the input layer and output layer (inputSize and 1) must NOT CHANGE
     retNN = NeuralNetwork([inputSize, 12, 1])
 
-    # global alpha
-    # alpha = alp
+    global alpha, epoch, mse, resW
+    alpha = 0.5999999
+    epoch = 0
+    mse = math.inf
+    resW = 0
     # train your network here
     retNN.train(X, y)
 
