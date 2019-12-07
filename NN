@@ -3,7 +3,9 @@ I pledge on my honor that I have not given or received
 any unauthorized assistance on this project.
 Siyuan Zhang UID 115299634
 Project 3 CMSC421
-This file contains a simple Neural Network
+This file contains a simple Neural Network using back-propagation with reLU and sigmoid as activation functions for
+hidden layer and output layer. The Neural Network also uses early stop, validation, randomization techniques for
+optimization purposes.
 """
 import math
 import random
@@ -11,15 +13,14 @@ from copy import deepcopy
 
 import numpy as np
 
-# alpha = 0.5
-# epoch = 0
-# mse = math.inf  # mean squared error
-global alpha, epoch, mse, resW
+global alpha, epoch, mse, resW, bia
 
 
 def relu(x):
     '''
     ReLu function
+    Input: a vector of elements to preform ReLU on
+    Output: a vector of elements with ReLU preformed on them
     '''
 
     return np.maximum(x, 0)
@@ -28,6 +29,8 @@ def relu(x):
 def reluDer(x):
     '''
     derivative of ReLu function
+    Input: a value
+    Output: Derivative of ReLU on it
      '''
     if x >= 0:
         return 1
@@ -103,7 +106,7 @@ class NeuralNetwork(object):
         pre_activations = []
         activations = [a]
         for w, b in zip(self.weights, self.biases):
-            z = np.dot(w, a)
+            z = np.dot(w, a) + b
             if len(activations) == len(self.weights):
                 a = activation(z)
             else:
@@ -117,8 +120,9 @@ class NeuralNetwork(object):
     def backpropagate(self, X, y):
         '''
         Perform a backpropagation, calculate deltas and update weights using reLu and sigmoid
+        input: X: data set; y: target
         '''
-        global alpha, resW
+        global resW, bia
         for e in random.sample(range(0, int(len(X[0]) * 1)), int(len(X[0]) * 1)):
             deltas = [[0 for i in range(0, len(self.weights[l]))] for l in range(0, len(self.weights))]
             a, pre, post = self.forward([[X[i][e]] for i in range(0, len(X))])
@@ -137,45 +141,31 @@ class NeuralNetwork(object):
                     for j in range(0, len(self.weights[l][i])):
                         self.weights[l][i][j] = self.weights[l][i][j] + alpha * (
                                 post[l][j][0] * deltas[l][i])
+                    self.biases[l][i][0] = self.biases[l][i][0] + 0.01* deltas[l][i]
 
-            # vtest = X[:, int(len(X[0]) * 0.9): len(X[0])]  # testing set
-            # pp = np.sum((self.predict(vtest) - y[0][int(len(X[0]) * 0.9): len(y[0])]) ** 2) / len(vtest[0])
-
-            pp = np.sum((self.predict(X)- y[0])**2)/len(X[0])
+            vtest = X[:, int(len(X[0]) * 0.9): len(X[0])]  # testing set
+            pp = np.sum((self.predict(vtest) - y[0][int(len(X[0]) * 0.9): len(y[0])]) ** 2) / len(vtest[0])
             # calculate mean square error
             global mse
-            # print(pp)
             if pp < mse:
-                resW = deepcopy(self.weights)  # trying
-                #print(pp)
+                resW = deepcopy(self.weights)  # saving the best combination of weights
+                bia = deepcopy(self.biases)
                 mse = pp
-
-
-            # if pp < 0.1:
-            #     print(mse)
-            #     alpha = 0.6
-            #     print("is")
-            #     print(pp)
-
-            # if pp < 0.11:
-            #
-            #     alpha = 0.001
-            # validation
-
-            if epoch > 20000:
-                #print(pp)
-                #print(mse)
-                self.weights = resW
-                # print(self.weights)
-                return False
+            # if reach the max number of iterations
+            if epoch > 150000 :
+                print(mse)
+                self.weights = resW  # set weight to the best weight combination
+                self.biases = bia
+                return False  # stop the loop
+            # if mse < 0.03, then stop the loop
             if pp < 0.03:
-                # print("yes")
                 return False
         return True
 
     def train(self, X, y):
         '''
         Train the NN, stop when the cost is minimized
+        Input: X: data set; y: target
         '''
         go = True
         while go:
@@ -217,19 +207,20 @@ It must then train the network given the passed data, where x is the parameters 
 '''
 
 
-def test_train(X, y, alp):
+def test_train(X, y):
     inputSize = np.size(X, 0)
 
     # feel free to change the inside (hidden) layers to best suite your implementation
     # but the sizes of the input layer and output layer (inputSize and 1) must NOT CHANGE
     retNN = NeuralNetwork([inputSize, 12, 1])
 
-    global alpha, epoch, mse, resW
-    alpha = alp
-    # alpha = 0.9
+    # initializing global values
+    global alpha, epoch, mse, resW, bia
+    alpha = 0.21#0.21 #0.71
     epoch = 0
     mse = math.inf
     resW = 0
+    bia = 0
     # train your network here
     retNN.train(X, y)
 
