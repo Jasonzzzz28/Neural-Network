@@ -1,9 +1,5 @@
                 
 """
-I pledge on my honor that I have not given or received
-any unauthorized assistance on this project.
-Siyuan Zhang UID 115299634
-Project 3 CMSC421
 This file contains a simple Neural Network using back-propagation with reLU and sigmoid as activation functions for
 hidden layer and output layer. The Neural Network also uses early stop, validation, randomization techniques for
 optimization purposes.
